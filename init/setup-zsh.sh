@@ -544,49 +544,122 @@ install_oh_my_posh() {
     fi
 }
 
-# Function to install clawdbot
-install_clawdbot() {
-    print_status "Installing clawdbot..."
+# Function to install Node.js and npm
+install_nodejs() {
+    print_status "Checking Node.js and npm..."
     
-    if command_exists clawdbot; then
-        print_success "clawdbot is already installed"
+    if command_exists node && command_exists npm; then
+        print_success "Node.js and npm are already installed"
+        print_status "Node.js version: $(node --version)"
+        print_status "npm version: $(npm --version)"
         return 0
     fi
     
-    # Check if npm/npx is available
-    if command_exists npm; then
-        print_status "Installing clawdbot via npm..."
-        npm install -g @anthropics/claude-code
-        print_success "clawdbot (claude-code) installed successfully"
-    elif command_exists pipx; then
-        print_status "Installing clawdbot via pipx..."
-        pipx install claude-code
-        print_success "clawdbot installed via pipx"
+    print_status "Installing Node.js and npm..."
+    
+    if command_exists apt-get; then
+        # Ubuntu/Debian - Install Node.js LTS via NodeSource
+        print_status "Installing Node.js via NodeSource (LTS)..."
+        curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+        print_success "Node.js installed successfully"
+    elif command_exists yum; then
+        # CentOS/RHEL
+        print_status "Installing Node.js via NodeSource (LTS)..."
+        curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash -
+        sudo yum install -y nodejs
+        print_success "Node.js installed successfully"
+    elif command_exists brew; then
+        # macOS
+        print_status "Installing Node.js via Homebrew..."
+        brew install node
+        print_success "Node.js installed successfully"
     else
-        print_warning "Could not install clawdbot - npm or pipx not found"
-        print_status "Please install Node.js/npm or pipx first, then run: npm install -g @anthropics/claude-code"
+        print_warning "Could not install Node.js - no supported package manager found"
+        print_status "Please install Node.js manually from: https://nodejs.org/"
+        return 1
+    fi
+    
+    # Verify installation
+    if command_exists node && command_exists npm; then
+        print_status "Node.js version: $(node --version)"
+        print_status "npm version: $(npm --version)"
+        return 0
+    else
+        print_warning "Node.js installation may have failed"
+        return 1
+    fi
+}
+
+# Function to install clawdbot (Claude Code CLI)
+install_clawdbot() {
+    print_status "Installing Claude Code CLI..."
+    
+    # Check for claude command (the actual CLI name)
+    if command_exists claude; then
+        print_success "Claude Code CLI is already installed"
+        claude --version 2>/dev/null || true
+        return 0
+    fi
+    
+    # Use the official native installer (recommended method)
+    # See: https://docs.anthropic.com/en/docs/claude-code/setup
+    print_status "Installing Claude Code via official installer..."
+    
+    if curl -fsSL https://claude.ai/install.sh | bash; then
+        print_success "Claude Code CLI installed successfully"
+        
+        # Verify installation
+        if command_exists claude; then
+            print_status "Claude Code version:"
+            claude --version 2>/dev/null || true
+        fi
+        return 0
+    else
+        print_warning "Failed to install Claude Code CLI"
+        print_status "You can install manually with:"
+        print_status "  curl -fsSL https://claude.ai/install.sh | bash"
         return 1
     fi
 }
 
 # Function to install cursor CLI
 install_cursor_cli() {
-    print_status "Checking cursor CLI..."
+    print_status "Checking cursor CLI (agent)..."
+    
+    # Check for both 'cursor' and 'agent' commands
+    if command_exists agent; then
+        print_success "Cursor CLI (agent) is already installed"
+        agent --version 2>/dev/null || true
+        return 0
+    fi
     
     if command_exists cursor; then
         print_success "cursor CLI is already installed"
         return 0
     fi
     
-    print_warning "cursor CLI is not installed"
-    print_status "To install cursor CLI:"
-    print_status "  1. Open Cursor IDE"
-    print_status "  2. Press Cmd+Shift+P (macOS) or Ctrl+Shift+P (Linux)"
-    print_status "  3. Run 'Shell Command: Install cursor command'"
-    print_status ""
-    print_status "Alternatively, download Cursor from: https://cursor.sh/"
+    print_status "Installing Cursor CLI..."
     
-    return 1
+    # Install using official method from https://cursor.com/docs/cli/installation
+    if curl https://cursor.com/install -fsS | bash; then
+        print_success "Cursor CLI installed successfully"
+        
+        # Verify installation
+        if command_exists agent; then
+            print_status "Cursor CLI version:"
+            agent --version 2>/dev/null || true
+        fi
+        return 0
+    else
+        print_warning "Failed to install Cursor CLI automatically"
+        print_status "You can install manually with:"
+        print_status "  curl https://cursor.com/install -fsS | bash"
+        print_status ""
+        print_status "After installation, verify with:"
+        print_status "  agent --version"
+        return 1
+    fi
 }
 
 # Function to clone integrations-hub repository
@@ -736,6 +809,15 @@ setup_zsh() {
         fi
     fi
     
+    # Install Node.js and npm
+    if command_exists node && command_exists npm; then
+        skipped_components+=("Node.js/npm")
+    else
+        if install_nodejs; then
+            installed_components+=("Node.js/npm")
+        fi
+    fi
+    
     # Install clawdbot (claude-code)
     if command_exists claude; then
         skipped_components+=("clawdbot (claude-code)")
@@ -745,11 +827,13 @@ setup_zsh() {
         fi
     fi
     
-    # Check cursor CLI
-    if command_exists cursor; then
+    # Check and install cursor CLI
+    if command_exists agent || command_exists cursor; then
         skipped_components+=("cursor CLI")
     else
-        install_cursor_cli
+        if install_cursor_cli; then
+            installed_components+=("cursor CLI")
+        fi
     fi
     
     # Create .zshrc
