@@ -1,0 +1,42 @@
+# Dockerfile for testing dotfiles setup
+# Build: docker build -f Dockerfile.test -t dotfiles-test .
+# Run:   docker run -it dotfiles-test
+
+FROM ubuntu:22.04
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install basic dependencies
+RUN apt-get update && apt-get install -y \
+    sudo \
+    git \
+    curl \
+    wget \
+    unzip \
+    ca-certificates \
+    locales \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up locale
+RUN locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+# Create a test user with sudo access
+RUN useradd -m -s /bin/bash testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Switch to test user
+USER testuser
+WORKDIR /home/testuser
+
+# Copy dotfiles
+COPY --chown=testuser:testuser . /home/testuser/dotfiles/
+
+# Set working directory to dotfiles
+WORKDIR /home/testuser/dotfiles
+
+# Default command - run bootstrap and drop into zsh
+CMD ["/bin/bash", "-c", "source bootstrap.sh && exec zsh"]

@@ -1,11 +1,17 @@
 # General Dotfiles
 
-A collection of dotfiles inspired by [Mathias Bynens' dotfiles](https://github.com/mathiasbynens/dotfiles), focused on aliases and Cursor extensions.
+A collection of dotfiles inspired by [Mathias Bynens' dotfiles](https://github.com/mathiasbynens/dotfiles), focused on developer productivity with zsh, aliases, and essential tools.
 
 ## Features
 
-- **Aliases**: Useful command shortcuts for common tasks
+- **Zsh as Default Shell**: Automatically sets zsh as default with Oh My Zsh
+- **Oh My Posh**: Beautiful, customizable prompt themes
+- **Comprehensive Git Aliases**: GitHub-style shortcuts (gk, gr, gm, etc.)
+- **Network Tools**: Full suite of networking utilities
+- **Lazygit**: Terminal UI for git operations
+- **Clawdbot**: Claude Code CLI for AI-assisted development
 - **Cursor Extensions**: Automated installation of essential Cursor extensions
+- **Auto Clone Repos**: Automatically clones integrations-hub repository
 - **Modular Structure**: Easy to maintain and extend
 
 ## Installation
@@ -15,7 +21,7 @@ A collection of dotfiles inspired by [Mathias Bynens' dotfiles](https://github.c
 Clone the repository and run the bootstrap script:
 
 ```bash
-git clone <your-repo-url> && cd general_dotfile && source bootstrap.sh
+git clone <your-repo-url> && cd DotFile && source bootstrap.sh
 ```
 
 ### Manual installation
@@ -33,24 +39,129 @@ git clone <your-repo-url> && cd general_dotfile && source bootstrap.sh
 ## Structure
 
 ```
-general_dotfile/
+DotFile/
 ├── bootstrap.sh              # Main bootstrap script
 ├── .aliases                  # Shell aliases
 ├── init/
-│   └── cursor-extensions.sh  # Cursor extensions installer
+│   ├── cursor-extensions.sh  # Cursor extensions installer
+│   ├── setup-zsh.sh          # Zsh setup (oh-my-zsh, oh-my-posh, tools)
+│   └── reload-aliases.sh     # Reload aliases helper
 └── README.md
 ```
 
+## What Gets Installed
+
+### Shell & Prompt
+- **Zsh** - Set as default shell
+- **Oh My Zsh** - Zsh framework with plugins
+- **Oh My Posh** - Beautiful prompt themes
+- **zsh-autosuggestions** - Fish-like suggestions
+- **zsh-syntax-highlighting** - Command highlighting
+- **zsh-completions** - Enhanced completions
+
+### Development Tools
+- **Lazygit** - Terminal UI for git (`lg` alias)
+- **Clawdbot** - Claude Code CLI
+- **Cursor CLI** - Cursor command line tools
+
+### Network Tools
+- `net-tools` - Basic networking (ifconfig, netstat)
+- `dnsutils` - DNS tools (dig, nslookup)
+- `nmap` - Network scanner
+- `tcpdump` - Packet analyzer
+- `mtr` - Network diagnostics
+- `traceroute` - Route tracing
+- `iftop` - Bandwidth monitoring
+- `whois` - Domain lookup
+
+### Repositories
+- **integrations-hub** - Cloned automatically to services directory
+
 ## Aliases
 
-The `.aliases` file includes useful shortcuts for:
+### Git Core
 
-- **Navigation**: `..`, `...`, `~`, etc.
-- **Git**: `g`, `ga`, `gc`, `gco`, etc.
-- **Docker**: `d`, `dc`, `dps`, etc.
-- **Development**: `py`, `pip`, `node`, etc.
-- **System**: `c`, `h`, `l`, etc.
-- **macOS specific**: `showfiles`, `hidefiles`, `flushdns`, etc.
+| Alias | Command |
+|-------|---------|
+| `g` | `git` |
+| `ga` | `git add` |
+| `gaa` | `git add --all` |
+| `gc` | `git commit` |
+| `gcm` | `git commit -m` |
+| `gd` | `git diff` |
+| `gds` | `git diff --staged` |
+| `gs` | `git status` |
+| `gp` | `git push` |
+| `gpl` | `git pull` |
+
+### Git GitHub-Style Shortcuts
+
+| Alias | Command |
+|-------|---------|
+| `gk` | `git checkout` |
+| `gr` | `git rebase` |
+| `gri` | `git rebase -i` |
+| `grc` | `git rebase --continue` |
+| `gra` | `git rebase --abort` |
+| `gm` | `git merge` |
+| `gma` | `git merge --abort` |
+| `gcp` | `git cherry-pick` |
+| `gf` | `git fetch` |
+| `gfa` | `git fetch --all` |
+| `gb` | `git branch` |
+| `gba` | `git branch -a` |
+| `gbd` | `git branch -d` |
+| `gbD` | `git branch -D` |
+| `gpf` | `git push --force-with-lease` |
+| `gpr` | `git pull --rebase` |
+| `gprom` | `git pull --rebase origin main` |
+| `lg` | `lazygit` |
+
+### Git Workflow
+
+| Alias | Command |
+|-------|---------|
+| `gwip` | `git add -A && git commit -m "WIP"` |
+| `gunwip` | Undo WIP commit |
+| `gstash` | `git stash` |
+| `gstashp` | `git stash pop` |
+| `gstashl` | `git stash list` |
+| `glog` | Pretty git log with graph |
+
+### Network
+
+| Alias | Command |
+|-------|---------|
+| `myip` | Show public IP |
+| `localip` | Show local IP |
+| `ports` | Show listening ports |
+| `listening` | Show LISTEN connections |
+| `openports` | Show open ports (sudo) |
+| `connections` | Show ESTABLISHED connections |
+| `ping` | Ping with 5 packets |
+| `speedtest` | Run speed test |
+| `flushdns` | Flush DNS cache |
+
+### Navigation & Files
+
+| Alias | Command |
+|-------|---------|
+| `..` | `cd ..` |
+| `...` | `cd ../..` |
+| `l` | `ls -lah` |
+| `la` | `ls -LA` |
+| `ll` | `ls -lF` |
+
+### Docker
+
+| Alias | Command |
+|-------|---------|
+| `d` | `docker` |
+| `dc` | `docker-compose` |
+| `dps` | `docker ps` |
+| `dpsa` | `docker ps -a` |
+| `di` | `docker images` |
+| `dex` | `docker exec -it` |
 
 ## Cursor Extensions
 
@@ -68,7 +179,30 @@ The following extensions are automatically installed:
 
 ## Usage
 
-After installation, you can use the aliases directly in your terminal. For Cursor extensions, they will be automatically available in Cursor.
+After installation, restart your terminal or run:
+
+```bash
+source ~/.zshrc
+```
+
+### Quick Commands
+
+```bash
+# Open lazygit
+lg
+
+# Checkout a branch
+gk feature-branch
+
+# Rebase interactively
+gri HEAD~3
+
+# Pull with rebase from origin main
+gprom
+
+# Quick WIP commit
+gwip
+```
 
 ### Updating extensions
 
@@ -76,22 +210,19 @@ After installation, you can use the aliases directly in your terminal. For Curso
 cursor --update-extensions
 ```
 
-### Manual extension installation
-
-```bash
-source ~/path/to/dotfiles/init/cursor-extensions.sh
-```
-
 ## Customization
 
-You can customize the aliases by editing the `.aliases` file, or add new extensions by modifying the `EXTENSIONS` array in `init/cursor-extensions.sh`.
+- **Aliases**: Edit `.aliases` file
+- **Extensions**: Modify `EXTENSIONS` array in `init/cursor-extensions.sh`
+- **Oh My Posh Theme**: Change theme in `~/.zshrc` or select from `~/.poshthemes/`
 
 ## Requirements
 
-- Bash or Zsh
+- Linux or macOS
+- Git
 - Cursor (for extensions)
-- Git (for installation)
+- Internet connection (for downloads)
 
 ## License
 
-MIT License - feel free to use and modify as needed. 
+MIT License - feel free to use and modify as needed.

@@ -15,9 +15,10 @@ alias la='ls -LA'
 alias ll='ls -lF'
 alias lsd='ls -l | grep "^d"'
 
-# Git aliases
+# Git aliases (core)
 alias g='git'
 alias ga='git add'
+alias gaa='git add --all'
 alias gc='git commit'
 alias gco='git checkout'
 alias gcb='git checkout -b'
@@ -29,6 +30,44 @@ alias gp='git push'
 alias gpl='git pull'
 alias gs='git status'
 alias gst='git status'
+
+# Git aliases (GitHub-style shortcuts)
+alias gk='git checkout'
+alias gr='git rebase'
+alias gri='git rebase -i'
+alias grc='git rebase --continue'
+alias gra='git rebase --abort'
+alias grs='git rebase --skip'
+alias gm='git merge'
+alias gma='git merge --abort'
+alias gcp='git cherry-pick'
+alias gcpa='git cherry-pick --abort'
+alias gcpc='git cherry-pick --continue'
+alias gf='git fetch'
+alias gfa='git fetch --all'
+alias gfp='git fetch --prune'
+alias gb='git branch'
+alias gba='git branch -a'
+alias gbd='git branch -d'
+alias gbD='git branch -D'
+alias grh='git reset HEAD'
+alias grhh='git reset HEAD --hard'
+alias gclean='git clean -fd'
+alias gstash='git stash'
+alias gstashp='git stash pop'
+alias gstashl='git stash list'
+alias gstashd='git stash drop'
+alias glog='git log --oneline --graph --decorate --all'
+alias glogp='git log --pretty=format:"%h %ad | %s%d [%an]" --graph --date=short'
+alias gwip='git add -A && git commit -m "WIP"'
+alias gunwip='git log -n 1 | grep -q -c "WIP" && git reset HEAD~1'
+alias gpf='git push --force-with-lease'
+alias gpr='git pull --rebase'
+alias gpro='git pull --rebase origin'
+alias gprom='git pull --rebase origin main'
+
+# Lazygit alias
+alias lg='lazygit'
 
 # Docker aliases
 alias d='docker'
@@ -56,7 +95,16 @@ alias nowdate='date +"%d-%m-%Y"'
 
 # Network aliases
 alias myip='curl http://ipecho.net/plain; echo'
+alias localip="hostname -I | awk '{print \$1}'"
 alias ports='netstat -tulanp'
+alias listening='netstat -an | grep LISTEN'
+alias ping='ping -c 5'
+alias speedtest='curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 -'
+alias flushdns='sudo systemd-resolve --flush-caches'
+alias netcheck='nc -zv'
+alias openports='sudo lsof -i -P -n | grep LISTEN'
+alias connections='netstat -an | grep ESTABLISHED'
+alias tcpdump='sudo tcpdump'
 
 # Safety aliases
 alias rm='rm -i'
