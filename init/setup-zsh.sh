@@ -359,7 +359,7 @@ EOF
 # =============================================================================
 
 # Lazygit configuration
-export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"
+# export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"
 
 # =============================================================================
 # Basic Prompt (fallback if oh-my-posh not available)
@@ -544,39 +544,86 @@ install_oh_my_posh() {
     fi
 }
 
-# Function to install Node.js and npm
-install_nodejs() {
-    print_status "Checking Node.js and npm..."
+# Function to install nvm (Node Version Manager)
+install_nvm() {
+    print_status "Checking nvm..."
     
-    if command_exists node && command_exists npm; then
-        print_success "Node.js and npm are already installed"
-        print_status "Node.js version: $(node --version)"
-        print_status "npm version: $(npm --version)"
+    # Check if nvm is already installed
+    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+    if [ -s "$NVM_DIR/nvm.sh" ]; then
+        print_success "nvm is already installed"
+        # shellcheck source=/dev/null
+        . "$NVM_DIR/nvm.sh"
+        print_status "nvm version: $(nvm --version)"
         return 0
     fi
     
-    print_status "Installing Node.js and npm..."
+    print_status "Installing nvm..."
     
-    if command_exists apt-get; then
-        # Ubuntu/Debian - Install Node.js LTS via NodeSource
-        print_status "Installing Node.js via NodeSource (LTS)..."
-        curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-        sudo apt-get install -y nodejs
-        print_success "Node.js installed successfully"
-    elif command_exists yum; then
-        # CentOS/RHEL
-        print_status "Installing Node.js via NodeSource (LTS)..."
-        curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash -
-        sudo yum install -y nodejs
-        print_success "Node.js installed successfully"
-    elif command_exists brew; then
-        # macOS
-        print_status "Installing Node.js via Homebrew..."
-        brew install node
-        print_success "Node.js installed successfully"
+    # Install nvm using the official install script
+    if curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash; then
+        print_success "nvm installed successfully"
+        
+        # Load nvm into current shell
+        export NVM_DIR="$HOME/.nvm"
+        # shellcheck source=/dev/null
+        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+        # shellcheck source=/dev/null
+        [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
+        
+        print_status "nvm version: $(nvm --version)"
+        return 0
     else
-        print_warning "Could not install Node.js - no supported package manager found"
-        print_status "Please install Node.js manually from: https://nodejs.org/"
+        print_warning "Failed to install nvm"
+        print_status "You can install manually from: https://github.com/nvm-sh/nvm"
+        return 1
+    fi
+}
+
+# Function to install Node.js and npm via nvm (version 22+)
+install_nodejs() {
+    print_status "Checking Node.js and npm..."
+    
+    # Load nvm if available
+    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+    if [ -s "$NVM_DIR/nvm.sh" ]; then
+        # shellcheck source=/dev/null
+        . "$NVM_DIR/nvm.sh"
+    fi
+    
+    # Check if Node.js 22+ is already installed and active
+    if command_exists node && command_exists npm; then
+        local node_version=$(node --version | sed 's/v//' | cut -d. -f1)
+        if [ "$node_version" -ge 22 ] 2>/dev/null; then
+            print_success "Node.js and npm are already installed (v22+)"
+            print_status "Node.js version: $(node --version)"
+            print_status "npm version: $(npm --version)"
+            return 0
+        else
+            print_status "Node.js version $(node --version) is below v22, upgrading..."
+        fi
+    fi
+    
+    # Install nvm if not available
+    if ! command -v nvm >/dev/null 2>&1; then
+        if ! install_nvm; then
+            print_warning "Could not install nvm. Cannot proceed with Node.js installation."
+            return 1
+        fi
+    fi
+    
+    print_status "Installing Node.js 22 via nvm..."
+    
+    # Install Node.js 22 (required by clawdbot)
+    if nvm install 22; then
+        print_success "Node.js 22 installed successfully"
+        
+        # Set Node.js 22 as the default version
+        nvm alias default 22
+        nvm use default
+        print_success "Node.js 22 set as default version"
+    else
+        print_warning "Failed to install Node.js 22 via nvm"
         return 1
     fi
     
@@ -593,32 +640,47 @@ install_nodejs() {
 
 # Function to install clawdbot (Claude Code CLI)
 install_clawdbot() {
-    print_status "Installing Claude Code CLI..."
+    print_status "Installing clawdbot..."
     
-    # Check for claude command (the actual CLI name)
-    if command_exists claude; then
-        print_success "Claude Code CLI is already installed"
-        claude --version 2>/dev/null || true
+    # Load nvm if available
+    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+    if [ -s "$NVM_DIR/nvm.sh" ]; then
+        # shellcheck source=/dev/null
+        . "$NVM_DIR/nvm.sh"
+    fi
+    
+    # Check if clawdbot is already installed
+    if command_exists clawdbot; then
+        print_success "clawdbot is already installed"
+        clawdbot --version 2>/dev/null || true
         return 0
     fi
     
-    # Use the official native installer (recommended method)
-    # See: https://docs.anthropic.com/en/docs/claude-code/setup
-    print_status "Installing Claude Code via official installer..."
+    # Ensure npm is available, install Node.js if needed
+    if ! command_exists npm; then
+        print_status "npm is not installed. Installing Node.js first..."
+        if ! install_nodejs; then
+            print_warning "Failed to install Node.js. Cannot install clawdbot."
+            return 1
+        fi
+    fi
     
-    if curl -fsSL https://claude.ai/install.sh | bash; then
-        print_success "Claude Code CLI installed successfully"
+    # Install clawdbot globally via npm
+    print_status "Installing clawdbot via npm..."
+    
+    if npm i -g clawdbot; then
+        print_success "clawdbot installed successfully"
         
         # Verify installation
-        if command_exists claude; then
-            print_status "Claude Code version:"
-            claude --version 2>/dev/null || true
+        if command_exists clawdbot; then
+            print_status "clawdbot version:"
+            clawdbot --version 2>/dev/null || true
         fi
         return 0
     else
-        print_warning "Failed to install Claude Code CLI"
+        print_warning "Failed to install clawdbot"
         print_status "You can install manually with:"
-        print_status "  curl -fsSL https://claude.ai/install.sh | bash"
+        print_status "  npm i -g clawdbot"
         return 1
     fi
 }
