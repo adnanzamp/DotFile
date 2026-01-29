@@ -502,30 +502,85 @@ install_lazygit() {
     fi
 }
 
+# Function to install Nerd Fonts (required for oh-my-posh icons)
+install_nerd_fonts() {
+    print_status "Installing Nerd Fonts for terminal icons..."
+    
+    local fonts_dir="$HOME/.local/share/fonts"
+    local nerd_font_installed=0
+    
+    # Check if any Nerd Font is already installed
+    if [ -d "$fonts_dir" ] && ls "$fonts_dir"/*NerdFont* >/dev/null 2>&1; then
+        print_success "Nerd Fonts already installed"
+        return 0
+    fi
+    
+    # Create fonts directory
+    mkdir -p "$fonts_dir"
+    
+    # Download and install popular Nerd Fonts
+    local fonts=("FiraCode" "JetBrainsMono" "Hack")
+    
+    for font in "${fonts[@]}"; do
+        print_status "Downloading $font Nerd Font..."
+        local font_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${font}.zip"
+        local font_zip="/tmp/${font}.zip"
+        
+        if curl -fsSL "$font_url" -o "$font_zip" 2>/dev/null; then
+            unzip -q -o "$font_zip" -d "$fonts_dir" 2>/dev/null
+            rm -f "$font_zip"
+            print_success "$font Nerd Font installed"
+            ((nerd_font_installed++))
+        else
+            print_warning "Failed to download $font Nerd Font"
+        fi
+    done
+    
+    # Update font cache
+    if command_exists fc-cache; then
+        print_status "Updating font cache..."
+        fc-cache -f "$fonts_dir"
+        print_success "Font cache updated"
+    fi
+    
+    if [ $nerd_font_installed -gt 0 ]; then
+        print_success "Nerd Fonts installed successfully"
+        print_status "Available fonts: FiraCode Nerd Font, JetBrainsMono Nerd Font, Hack Nerd Font"
+        print_status ""
+        print_status "To use in your terminal:"
+        print_status "  - Set your terminal font to one of the installed Nerd Fonts"
+        print_status "  - For VS Code/Cursor: Add to settings.json:"
+        print_status "    \"terminal.integrated.fontFamily\": \"'FiraCode Nerd Font', 'JetBrainsMono Nerd Font', monospace\""
+        return 0
+    else
+        print_warning "No Nerd Fonts were installed"
+        return 1
+    fi
+}
+
 # Function to install oh-my-posh
 install_oh_my_posh() {
     print_status "Installing oh-my-posh..."
     
     if command_exists oh-my-posh; then
         print_success "oh-my-posh is already installed"
-        return 0
-    fi
-    
-    # Install oh-my-posh
-    print_status "Downloading oh-my-posh..."
-    if curl -s https://ohmyposh.dev/install.sh | bash -s; then
-        print_success "oh-my-posh installed successfully"
     else
-        print_warning "Failed to install oh-my-posh via install script, trying alternative method..."
-        # Alternative: install via Homebrew if available
-        if command_exists brew; then
-            brew install jandedobbeleer/oh-my-posh/oh-my-posh
-            print_success "oh-my-posh installed via Homebrew"
+        # Install oh-my-posh
+        print_status "Downloading oh-my-posh..."
+        if curl -s https://ohmyposh.dev/install.sh | bash -s; then
+            print_success "oh-my-posh installed successfully"
         else
-            # Manual download for Linux
-            sudo wget https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64 -O /usr/local/bin/oh-my-posh
-            sudo chmod +x /usr/local/bin/oh-my-posh
-            print_success "oh-my-posh installed manually"
+            print_warning "Failed to install oh-my-posh via install script, trying alternative method..."
+            # Alternative: install via Homebrew if available
+            if command_exists brew; then
+                brew install jandedobbeleer/oh-my-posh/oh-my-posh
+                print_success "oh-my-posh installed via Homebrew"
+            else
+                # Manual download for Linux
+                sudo wget https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64 -O /usr/local/bin/oh-my-posh
+                sudo chmod +x /usr/local/bin/oh-my-posh
+                print_success "oh-my-posh installed manually"
+            fi
         fi
     fi
     
@@ -542,6 +597,9 @@ install_oh_my_posh() {
     else
         print_success "oh-my-posh themes already exist"
     fi
+    
+    # Install Nerd Fonts (required for icons)
+    install_nerd_fonts
 }
 
 # Function to install nvm (Node Version Manager)
