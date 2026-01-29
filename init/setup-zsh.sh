@@ -726,20 +726,34 @@ install_cursor_cli() {
 
 # Function to clone integrations-hub repository
 clone_integrations_hub() {
-    local services_dir="$1"
     local repo_url="git@github.com:Zampfi/integrations-hub.git"
-    local target_dir="$services_dir/integrations-hub"
+    
+    # Determine the target directory for integrations-hub
+    # Priority: 1) ~/zamp/services  2) parent of dotfiles dir  3) ~/services
+    local target_dir=""
+    
+    if [ -d "$HOME/zamp/services" ]; then
+        target_dir="$HOME/zamp/services/integrations-hub"
+    elif [ -d "$HOME/services" ]; then
+        target_dir="$HOME/services/integrations-hub"
+    else
+        # Create ~/zamp/services as default location
+        target_dir="$HOME/zamp/services/integrations-hub"
+    fi
     
     print_status "Checking integrations-hub repository..."
+    print_status "Target directory: $target_dir"
     
     if [ -d "$target_dir" ]; then
         print_success "integrations-hub already exists at $target_dir"
         return 0
     fi
     
-    if [ ! -d "$services_dir" ]; then
-        print_status "Creating services directory at $services_dir..."
-        mkdir -p "$services_dir"
+    # Ensure parent directory exists
+    local parent_dir=$(dirname "$target_dir")
+    if [ ! -d "$parent_dir" ]; then
+        print_status "Creating directory at $parent_dir..."
+        mkdir -p "$parent_dir"
     fi
     
     print_status "Cloning integrations-hub repository..."
@@ -863,10 +877,11 @@ setup_zsh() {
     fi
     
     # Clone integrations-hub repository
-    if [ -d "$services_dir/integrations-hub" ]; then
+    # Check common locations for existing repo
+    if [ -d "$HOME/zamp/services/integrations-hub" ] || [ -d "$HOME/services/integrations-hub" ]; then
         skipped_components+=("integrations-hub repo")
     else
-        if clone_integrations_hub "$services_dir"; then
+        if clone_integrations_hub; then
             installed_components+=("integrations-hub repo")
         fi
     fi
