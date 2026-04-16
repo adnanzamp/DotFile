@@ -69,6 +69,9 @@ alias gprom='git pull --rebase origin main'
 # Lazygit alias
 alias lg='lazygit'
 
+# Claude Code alias (auto mode enabled by default)
+alias claude='claude --enable-auto-mode'
+
 # Docker aliases
 alias d='docker'
 alias dc='docker-compose'

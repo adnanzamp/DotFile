@@ -1,0 +1,20 @@
+{
+    "terminal.integrated.profiles.linux": {
+      "poetry": {
+        "path": "bash",
+        "args": [
+          "-c",
+          "cd /home/coder/zamp/services/pantheon && source $(poetry env info --path)/bin/activate && exec bash"
+        ]
+      }
+    },
+    "terminal.integrated.defaultProfile.linux": "poetry",
+    "python.pythonPath": "python",
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+      "services/pantheon/pantheon_v2"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.autoTestDiscoverOnSaveEnabled": true
+  }
+  

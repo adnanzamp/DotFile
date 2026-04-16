@@ -1,0 +1,252 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Temporal Activity Worker (no debugger + faster)",
+        "type": "node",
+        "request": "launch",
+        "runtimeExecutable": "nodemon",
+        "runtimeArgs": [
+          "--watch",
+          "**/*.py",
+          "--signal",
+          "SIGTERM",
+          "--exec",
+          "python"
+        ],
+        "program": "${workspaceFolder}/services/pantheon/pantheon_v2/platform/orchestrator/providers/temporal/activity_workers.py",
+        "restart": true,
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "internalConsoleOptions": "neverOpen"
+      },
+      {
+        "name": "Temporal Workflow Worker (no debugger + faster)",
+        "type": "node",
+        "request": "launch",
+        "runtimeExecutable": "nodemon",
+        "runtimeArgs": [
+          "--watch",
+          "**/*.py",
+          "--signal",
+          "SIGTERM",
+          "--exec",
+          "python"
+        ],
+        "program": "${workspaceFolder}/services/pantheon/pantheon_v2/platform/orchestrator/providers/temporal/workflow_workers.py",
+        "restart": true,
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "internalConsoleOptions": "neverOpen"
+      },
+      {
+        "name": "Temporal Activity Worker (with debugger)",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/services/pantheon/hot_reload.py",
+        "args": [
+          "${workspaceFolder}/services/pantheon/pantheon_v2/platform/orchestrator/providers/temporal/activity_workers.py"
+        ],
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "internalConsoleOptions": "neverOpen",
+        "justMyCode": false,
+        "preLaunchTask": "StartTemporalServers"
+      },
+      {
+        "name": "Temporal Workflow Worker (with debugger)",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/services/pantheon/hot_reload.py",
+        "args": [
+          "${workspaceFolder}/services/pantheon/pantheon_v2/platform/orchestrator/providers/temporal/workflow_workers.py"
+        ],
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "internalConsoleOptions": "neverOpen",
+        "justMyCode": false,
+        "preLaunchTask": "StartTemporalServers"
+      },
+      {
+        "name": "FastAPI Web Server",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/services/pantheon/pantheon_v2/app.py",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "python": "${command:python.interpreterPath}",
+        "justMyCode": false
+      },
+      {
+        "name": "HTTP Server (Temporal)",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/services/pantheon/pantheon_v2/platform/orchestrator/providers/temporal/http_server.py",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "python": "${command:python.interpreterPath}",
+        "justMyCode": false
+      },
+      {
+        "name": "Run Integration Tests",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/services/pantheon/pantheon_v2/tests/integration_tests.py",
+        "args": [
+          "${workspaceFolder}/services/pantheon/pantheon_v2/tests/ca.pem",
+          "${workspaceFolder}/services/pantheon/pantheon_v2/tests/key.pem",
+          "zamp-stg-general.dkqth",
+          "zamp-stg-general.dkqth.tmprl.cloud:7233"
+        ],
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "python": "${command:python.interpreterPath}"
+      },
+      {
+        "name": "Run Current File's Unit Tests",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "pytest",
+        "args": [
+          "${file}",
+          "--maxfail=1",
+          "--disable-warnings"
+        ],
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/services/pantheon"
+        }
+      },
+      {
+        "name": "Coder Activity Worker (debug + hot reload)",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/services/pantheon/hot_reload.py",
+        "args": [
+          "${workspaceFolder}/services/pantheon/pantheon_v2/platform/orchestrator/providers/temporal/activity_workers.py"
+        ],
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "internalConsoleOptions": "neverOpen",
+        "justMyCode": false,
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/services/pantheon",
+          "DISABLE_TEMPORAL_SANDBOX": "True"
+        }
+      },
+      {
+        "name": "Coder Workflow Worker (debug + hot reload)",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/services/pantheon/hot_reload.py",
+        "args": [
+          "${workspaceFolder}/services/pantheon/pantheon_v2/platform/orchestrator/providers/temporal/workflow_workers.py"
+        ],
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "internalConsoleOptions": "neverOpen",
+        "justMyCode": false,
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/services/pantheon",
+          "DISABLE_TEMPORAL_SANDBOX": "True"
+        }
+      },
+      {
+        "name": "Coder HP Activity Worker (debug + hot reload)",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/services/pantheon/hot_reload.py",
+        "args": [
+          "${workspaceFolder}/services/pantheon/pantheon_v2/platform/orchestrator/providers/temporal/high_priority_activity_workers.py"
+        ],
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "internalConsoleOptions": "neverOpen",
+        "justMyCode": false,
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/services/pantheon",
+          "DISABLE_TEMPORAL_SANDBOX": "True"
+        }
+      },
+      {
+        "name": "Coder HP Workflow Worker (debug + hot reload)",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/services/pantheon/hot_reload.py",
+        "args": [
+          "${workspaceFolder}/services/pantheon/pantheon_v2/platform/orchestrator/providers/temporal/high_priority_workflow_workers.py"
+        ],
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "internalConsoleOptions": "neverOpen",
+        "justMyCode": false,
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/services/pantheon",
+          "DISABLE_TEMPORAL_SANDBOX": "True"
+        }
+      },
+      {
+        "name": "MCP Server (Local Dev)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "pantheon_v2.platform.mcp.local_dev",
+        "args": [
+          "--port",
+          "8767"
+        ],
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "python": "${command:python.interpreterPath}",
+        "justMyCode": false,
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/services/pantheon"
+        }
+      },
+      {
+        "name": "Pace CLI Chat",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "pantheon_v2.platform.pace_cli",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/services/pantheon",
+        "python": "${command:python.interpreterPath}",
+        "justMyCode": false,
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/services/pantheon"
+        }
+      }
+    ],
+    "compounds": [
+      {
+        "name": "All Temporal Workers (no debugger + faster)",
+        "configurations": [
+          "Temporal Activity Worker (no debugger + faster)",
+          "Temporal Workflow Worker (no debugger + faster)"
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "All Temporal Workers (with debugger)",
+        "configurations": [
+          "Temporal Activity Worker (with debugger)",
+          "Temporal Workflow Worker (with debugger)",
+          "FastAPI Web Server"
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "Coder Workers + FastAPI Web Server (debug + hot reload)",
+        "configurations": [
+          "Coder Activity Worker (debug + hot reload)",
+          "Coder Workflow Worker (debug + hot reload)",
+          "Coder HP Activity Worker (debug + hot reload)",
+          "Coder HP Workflow Worker (debug + hot reload)",
+          "FastAPI Web Server"
+        ],
+        "stopAll": true
+      }
+    ]
+  }
+  

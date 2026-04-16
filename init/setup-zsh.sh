@@ -558,6 +558,113 @@ install_nerd_fonts() {
     fi
 }
 
+# Function to install GitHub CLI (gh)
+install_gh_cli() {
+    print_status "Installing GitHub CLI (gh)..."
+
+    if command_exists gh; then
+        print_success "GitHub CLI (gh) is already installed"
+        gh --version 2>/dev/null || true
+        return 0
+    fi
+
+    if command_exists apt-get; then
+        # Ubuntu/Debian - official method
+        print_status "Installing gh via apt (official GitHub repo)..."
+        (type -p wget >/dev/null || (sudo apt-get update && sudo apt-get install wget -y)) \
+            && sudo mkdir -p -m 755 /etc/apt/keyrings \
+            && out=$(mktemp) && wget -nv -O"$out" https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+            && cat "$out" | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+            && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+            && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+            && sudo apt-get update \
+            && sudo apt-get install gh -y
+        if command_exists gh; then
+            print_success "GitHub CLI installed successfully"
+            gh --version 2>/dev/null || true
+        else
+            print_warning "Failed to install GitHub CLI"
+            return 1
+        fi
+    elif command_exists brew; then
+        # macOS
+        print_status "Installing gh via Homebrew..."
+        brew install gh
+        print_success "GitHub CLI installed successfully"
+    elif command_exists yum; then
+        # CentOS/RHEL
+        print_status "Installing gh via yum..."
+        sudo yum install -y gh 2>/dev/null || {
+            # Fallback: install from GitHub releases
+            print_status "Falling back to GitHub releases..."
+            local GH_VERSION=$(curl -s "https://api.github.com/repos/cli/cli/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+            if [ -z "$GH_VERSION" ]; then
+                GH_VERSION="2.63.2"
+            fi
+            curl -Lo gh.tar.gz "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz"
+            tar xf gh.tar.gz
+            sudo install "gh_${GH_VERSION}_linux_amd64/bin/gh" /usr/local/bin
+            rm -rf "gh_${GH_VERSION}_linux_amd64" gh.tar.gz
+        }
+        if command_exists gh; then
+            print_success "GitHub CLI installed successfully"
+        else
+            print_warning "Failed to install GitHub CLI"
+            return 1
+        fi
+    else
+        print_warning "Could not install GitHub CLI - no supported package manager found"
+        return 1
+    fi
+}
+
+# Function to install Claude Code (official Anthropic CLI)
+install_claude_code() {
+    print_status "Installing Claude Code..."
+
+    # Load nvm if available
+    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+    if [ -s "$NVM_DIR/nvm.sh" ]; then
+        # shellcheck source=/dev/null
+        . "$NVM_DIR/nvm.sh"
+    fi
+
+    # Check if claude is already installed
+    if command_exists claude; then
+        print_success "Claude Code is already installed"
+        claude --version 2>/dev/null || true
+        return 0
+    fi
+
+    # Ensure npm is available, install Node.js if needed
+    if ! command_exists npm; then
+        print_status "npm is not installed. Installing Node.js first..."
+        if ! install_nodejs; then
+            print_warning "Failed to install Node.js. Cannot install Claude Code."
+            return 1
+        fi
+    fi
+
+    # Install Claude Code globally via npm
+    print_status "Installing Claude Code via npm..."
+
+    if npm install -g @anthropic-ai/claude-code; then
+        print_success "Claude Code installed successfully"
+
+        # Verify installation
+        if command_exists claude; then
+            print_status "Claude Code version:"
+            claude --version 2>/dev/null || true
+        fi
+        return 0
+    else
+        print_warning "Failed to install Claude Code"
+        print_status "You can install manually with:"
+        print_status "  npm install -g @anthropic-ai/claude-code"
+        return 1
+    fi
+}
+
 # Function to install oh-my-posh
 install_oh_my_posh() {
     print_status "Installing oh-my-posh..."
@@ -782,6 +889,55 @@ install_cursor_cli() {
     fi
 }
 
+# Function to setup VS Code / Cursor debugger configuration
+setup_vscode_config() {
+    local dotfiles_dir="$1"
+
+    print_status "Setting up VS Code / Cursor debugger configuration..."
+
+    local vscode_source="$dotfiles_dir/vscode"
+    # Target is the workspace .vscode directory (two levels up from DotFile)
+    local workspace_dir="$(cd "$dotfiles_dir/../.." 2>/dev/null && pwd)"
+    local vscode_target="$workspace_dir/.vscode"
+
+    if [ ! -d "$vscode_source" ]; then
+        print_warning "VS Code config source not found at $vscode_source"
+        return 1
+    fi
+
+    # Create target directory if it doesn't exist
+    mkdir -p "$vscode_target"
+
+    local files_copied=0
+
+    for config_file in "$vscode_source"/*.json; do
+        if [ -f "$config_file" ]; then
+            local filename=$(basename "$config_file")
+            local target_file="$vscode_target/$filename"
+
+            if [ -f "$target_file" ] && diff -q "$config_file" "$target_file" >/dev/null 2>&1; then
+                print_success "$filename already up to date"
+            else
+                if [ -f "$target_file" ]; then
+                    print_status "Updating $filename..."
+                else
+                    print_status "Installing $filename..."
+                fi
+                cp "$config_file" "$target_file"
+                ((files_copied++))
+            fi
+        fi
+    done
+
+    if [ $files_copied -gt 0 ]; then
+        print_success "VS Code config deployed ($files_copied files) to $vscode_target"
+    else
+        print_success "VS Code config already up to date"
+    fi
+
+    return 0
+}
+
 # Function to clone integrations-hub repository
 clone_integrations_hub() {
     local repo_url="git@github.com:Zampfi/integrations-hub.git"
@@ -912,7 +1068,16 @@ setup_zsh() {
             installed_components+=("lazygit")
         fi
     fi
-    
+
+    # Install GitHub CLI (gh)
+    if command_exists gh; then
+        skipped_components+=("GitHub CLI (gh)")
+    else
+        if install_gh_cli; then
+            installed_components+=("GitHub CLI (gh)")
+        fi
+    fi
+
     # Install oh-my-posh
     if command_exists oh-my-posh; then
         skipped_components+=("oh-my-posh")
@@ -961,7 +1126,16 @@ setup_zsh() {
             installed_components+=("clawdbot (claude-code)")
         fi
     fi
-    
+
+    # Install Claude Code (official Anthropic CLI)
+    if command_exists claude; then
+        skipped_components+=("Claude Code")
+    else
+        if install_claude_code; then
+            installed_components+=("Claude Code")
+        fi
+    fi
+
     # Check and install cursor CLI
     if command_exists agent || command_exists cursor; then
         skipped_components+=("cursor CLI")
@@ -970,7 +1144,12 @@ setup_zsh() {
             installed_components+=("cursor CLI")
         fi
     fi
-    
+
+    # Setup VS Code / Cursor debugger configuration
+    if setup_vscode_config "$dotfiles_dir"; then
+        installed_components+=("VS Code debugger config")
+    fi
+
     # Create .zshrc
     if create_zshrc "$home_dir" "$dotfiles_dir"; then
         installed_components+=("zshrc configuration")
@@ -1010,9 +1189,12 @@ setup_zsh() {
     print_status "  ✅ Essential packages (curl, wget, tree, htop, jq)"
     print_status "  ✅ Network tools (net-tools, nmap, tcpdump, mtr, etc.)"
     print_status "  ✅ Lazygit (terminal UI for git)"
+    print_status "  ✅ GitHub CLI (gh)"
+    print_status "  ✅ Claude Code (official Anthropic CLI)"
     print_status "  ✅ Clawdbot (Claude Code CLI)"
     print_status "  ✅ Cursor CLI"
     print_status "  ✅ integrations-hub repository"
+    print_status "  ✅ VS Code / Cursor debugger configuration"
     print_status "  ✅ Extensible configuration area for future additions"
     echo ""
     print_status "Git shortcuts available:"
