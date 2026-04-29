@@ -75,6 +75,34 @@ return {
     end,
   },
 
+  -- Pick a Python virtualenv interactively and tell pyright (and other
+  -- python LSPs) to use that interpreter. Auto-detects Poetry, uv, venv,
+  -- conda, virtualenv, hatch, and pipenv environments.
+  --
+  -- Keys:
+  --   <leader>vs  → open the venv picker
+  --   <leader>vc  → see the active venv
+  {
+    "linux-cultist/venv-selector.nvim",
+    branch = "regexp",
+    dependencies = {
+      "neovim/nvim-lspconfig",
+      "nvim-telescope/telescope.nvim",
+    },
+    cmd = { "VenvSelect", "VenvSelectCached" },
+    keys = {
+      { "<leader>vs", "<cmd>VenvSelect<cr>", desc = "Select Python venv" },
+      { "<leader>vc", "<cmd>VenvSelectCached<cr>", desc = "Active Python venv" },
+    },
+    opts = {
+      settings = {
+        options = {
+          notify_user_on_venv_activation = true,
+        },
+      },
+    },
+  },
+
   {
     "pwntester/octo.nvim",
     cmd = "Octo",
