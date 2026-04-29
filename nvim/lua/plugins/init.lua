@@ -54,6 +54,25 @@ return {
   {
     "sindrets/diffview.nvim",
     cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewToggleFiles", "DiffviewFocusFiles", "DiffviewFileHistory" },
+    config = function()
+      local actions = require("diffview.actions")
+      -- Override <leader>e in every diffview context to toggle the file
+      -- panel (collapse/expand) instead of just focusing it. The default
+      -- <leader>b still toggles too; <leader>e is the muscle-memory key.
+      require("diffview").setup({
+        keymaps = {
+          view = {
+            { "n", "<leader>e", actions.toggle_files, { desc = "Toggle the file panel" } },
+          },
+          file_panel = {
+            { "n", "<leader>e", actions.toggle_files, { desc = "Toggle the file panel" } },
+          },
+          file_history_panel = {
+            { "n", "<leader>e", actions.toggle_files, { desc = "Toggle the file panel" } },
+          },
+        },
+      })
+    end,
   },
 
   {
