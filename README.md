@@ -9,7 +9,9 @@ A collection of dotfiles inspired by [Mathias Bynens' dotfiles](https://github.c
 - **Comprehensive Git Aliases**: GitHub-style shortcuts (gk, gr, gm, etc.)
 - **Network Tools**: Full suite of networking utilities
 - **Lazygit**: Terminal UI for git operations
-- **Clawdbot**: Claude Code CLI for AI-assisted development
+- **zoxide**: Smarter `cd` (replaces the built-in `cd`)
+- **Neovim**: Latest stable + NvChad-based config
+- **tmux**: Config + TPM + plugins, prefix is `Ctrl+Space`
 - **Cursor Extensions**: Automated installation of essential Cursor extensions
 - **Auto Clone Repos**: Automatically clones integrations-hub repository
 - **Modular Structure**: Easy to maintain and extend
@@ -44,8 +46,12 @@ DotFile/
 ├── .aliases                  # Shell aliases
 ├── init/
 │   ├── cursor-extensions.sh  # Cursor extensions installer
-│   ├── setup-zsh.sh          # Zsh setup (oh-my-zsh, oh-my-posh, tools)
+│   ├── setup-zsh.sh          # Zsh setup (oh-my-zsh, oh-my-posh, tools, zoxide)
+│   ├── setup-nvim.sh         # Neovim install + symlink config
+│   ├── setup-tmux.sh         # tmux install + symlink config + TPM plugins
 │   └── reload-aliases.sh     # Reload aliases helper
+├── nvim/                     # NvChad-based Neovim config (linked to ~/.config/nvim)
+├── tmux/                     # tmux.conf (linked to ~/.config/tmux/tmux.conf)
 └── README.md
 ```
 
@@ -61,8 +67,14 @@ DotFile/
 
 ### Development Tools
 - **Lazygit** - Terminal UI for git (`lg` alias)
-- **Clawdbot** - Claude Code CLI
 - **Cursor CLI** - Cursor command line tools
+- **Claude Code** - Official Anthropic CLI (skipped if `claude` is already on PATH)
+- **zoxide** - Smarter `cd`; the generated `.zshrc` initializes it with `--cmd cd`,
+  so `cd <fragment>` jumps to the highest-frecency match
+- **Neovim** - Latest binary + NvChad-based config under `nvim/` symlinked to `~/.config/nvim`
+- **tmux** - Config under `tmux/tmux.conf` symlinked to `~/.config/tmux/tmux.conf`,
+  TPM cloned to `~/.config/tmux/plugins/tpm`, and the configured plugins
+  (tmux-sensible, vim-tmux-navigator, catppuccin-tmux, tmux-yank) pre-cloned
 
 ### Network Tools
 - `net-tools` - Basic networking (ifconfig, netstat)

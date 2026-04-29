@@ -72,6 +72,24 @@ else
     print_warning "Zsh setup script not found"
 fi
 
+# Setup Neovim (latest binary + NvChad-based config)
+if [ -f "$DOTFILES_DIR/init/setup-nvim.sh" ]; then
+    print_status "Setting up Neovim..."
+    source "$DOTFILES_DIR/init/setup-nvim.sh"
+    setup_nvim "$DOTFILES_DIR" || print_warning "Neovim setup did not complete"
+else
+    print_warning "Neovim setup script not found"
+fi
+
+# Setup tmux (binary + config + TPM + plugins)
+if [ -f "$DOTFILES_DIR/init/setup-tmux.sh" ]; then
+    print_status "Setting up tmux..."
+    source "$DOTFILES_DIR/init/setup-tmux.sh"
+    setup_tmux "$DOTFILES_DIR" || print_warning "tmux setup did not complete"
+else
+    print_warning "tmux setup script not found"
+fi
+
 # Install Cursor extensions if cursor CLI is available
 if command_exists cursor; then
     print_status "Installing Cursor extensions..."
@@ -99,8 +117,10 @@ print_status "  - Network tools (net-tools, nmap, tcpdump, mtr, etc.)"
 print_status "  - Lazygit (terminal UI for git)"
 print_status "  - GitHub CLI (gh)"
 print_status "  - Claude Code (official Anthropic CLI)"
-print_status "  - Clawdbot (Claude Code CLI)"
 print_status "  - Cursor CLI and extensions"
+print_status "  - Neovim (latest) with NvChad-based config"
+print_status "  - tmux with TPM + plugins (prefix: Ctrl+Space)"
+print_status "  - zoxide (smarter cd, aliased as cd)"
 print_status "  - VS Code / Cursor debugger configuration (launch.json, tasks.json, settings.json)"
 print_status "  - integrations-hub repository cloned"
 print_status ""

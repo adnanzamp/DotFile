@@ -240,6 +240,7 @@ create_zshrc() {
            grep -q "zsh-autosuggestions" "$zshrc_file" && \
            grep -q "zsh-syntax-highlighting" "$zshrc_file" && \
            grep -q "oh-my-posh" "$zshrc_file" && \
+           grep -q "zoxide init zsh --cmd cd" "$zshrc_file" && \
            grep -q "source.*\.aliases" "$zshrc_file"; then
             print_success ".zshrc already configured correctly"
             return 0
@@ -357,6 +358,11 @@ EOF
 # =============================================================================
 # Tool Configurations
 # =============================================================================
+
+# zoxide — smarter cd, replaces the built-in `cd`
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init zsh --cmd cd)"
+fi
 
 # Lazygit configuration
 # export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"
@@ -665,6 +671,35 @@ install_claude_code() {
     fi
 }
 
+# Function to install zoxide (smarter cd)
+install_zoxide() {
+    print_status "Installing zoxide..."
+
+    if command_exists zoxide; then
+        print_success "zoxide is already installed"
+        zoxide --version 2>/dev/null || true
+        return 0
+    fi
+
+    # Official installer — handles macOS, Linux, and architecture detection
+    if curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh; then
+        # Installer drops the binary in ~/.local/bin
+        if [ -d "$HOME/.local/bin" ]; then
+            export PATH="$HOME/.local/bin:$PATH"
+        fi
+
+        if command_exists zoxide; then
+            print_success "zoxide installed successfully"
+            zoxide --version 2>/dev/null || true
+            return 0
+        fi
+    fi
+
+    print_warning "Failed to install zoxide"
+    print_status "You can install manually from https://github.com/ajeetdsouza/zoxide"
+    return 1
+}
+
 # Function to install oh-my-posh
 install_oh_my_posh() {
     print_status "Installing oh-my-posh..."
@@ -779,7 +814,7 @@ install_nodejs() {
     
     print_status "Installing Node.js 22 via nvm..."
     
-    # Install Node.js 22 (required by clawdbot)
+    # Install Node.js 22
     if nvm install 22; then
         print_success "Node.js 22 installed successfully"
         
@@ -799,53 +834,6 @@ install_nodejs() {
         return 0
     else
         print_warning "Node.js installation may have failed"
-        return 1
-    fi
-}
-
-# Function to install clawdbot (Claude Code CLI)
-install_clawdbot() {
-    print_status "Installing clawdbot..."
-    
-    # Load nvm if available
-    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
-    if [ -s "$NVM_DIR/nvm.sh" ]; then
-        # shellcheck source=/dev/null
-        . "$NVM_DIR/nvm.sh"
-    fi
-    
-    # Check if clawdbot is already installed
-    if command_exists clawdbot; then
-        print_success "clawdbot is already installed"
-        clawdbot --version 2>/dev/null || true
-        return 0
-    fi
-    
-    # Ensure npm is available, install Node.js if needed
-    if ! command_exists npm; then
-        print_status "npm is not installed. Installing Node.js first..."
-        if ! install_nodejs; then
-            print_warning "Failed to install Node.js. Cannot install clawdbot."
-            return 1
-        fi
-    fi
-    
-    # Install clawdbot globally via npm
-    print_status "Installing clawdbot via npm..."
-    
-    if npm i -g clawdbot; then
-        print_success "clawdbot installed successfully"
-        
-        # Verify installation
-        if command_exists clawdbot; then
-            print_status "clawdbot version:"
-            clawdbot --version 2>/dev/null || true
-        fi
-        return 0
-    else
-        print_warning "Failed to install clawdbot"
-        print_status "You can install manually with:"
-        print_status "  npm i -g clawdbot"
         return 1
     fi
 }
@@ -1078,6 +1066,15 @@ setup_zsh() {
         fi
     fi
 
+    # Install zoxide (cd replacement)
+    if command_exists zoxide; then
+        skipped_components+=("zoxide")
+    else
+        if install_zoxide; then
+            installed_components+=("zoxide")
+        fi
+    fi
+
     # Install oh-my-posh
     if command_exists oh-my-posh; then
         skipped_components+=("oh-my-posh")
@@ -1118,15 +1115,6 @@ setup_zsh() {
         fi
     fi
     
-    # Install clawdbot (claude-code)
-    if command_exists claude; then
-        skipped_components+=("clawdbot (claude-code)")
-    else
-        if install_clawdbot; then
-            installed_components+=("clawdbot (claude-code)")
-        fi
-    fi
-
     # Install Claude Code (official Anthropic CLI)
     if command_exists claude; then
         skipped_components+=("Claude Code")
@@ -1190,8 +1178,8 @@ setup_zsh() {
     print_status "  ✅ Network tools (net-tools, nmap, tcpdump, mtr, etc.)"
     print_status "  ✅ Lazygit (terminal UI for git)"
     print_status "  ✅ GitHub CLI (gh)"
+    print_status "  ✅ zoxide (smarter cd, aliased as cd)"
     print_status "  ✅ Claude Code (official Anthropic CLI)"
-    print_status "  ✅ Clawdbot (Claude Code CLI)"
     print_status "  ✅ Cursor CLI"
     print_status "  ✅ integrations-hub repository"
     print_status "  ✅ VS Code / Cursor debugger configuration"
