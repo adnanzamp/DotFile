@@ -4,8 +4,10 @@
 # Inspired by https://github.com/mathiasbynens/dotfiles
 # Focused on zsh configuration, aliases, and cursor extensions
 # Supports both local and remote installations
-
-set -e
+#
+# We deliberately do NOT set -e here. Coder workspaces run this concurrently
+# with other apt-using bootstrap scripts; a single component failing should
+# not poison the whole run and mark the workspace unhealthy.
 
 # Colors for output
 RED='\033[0;31m'

@@ -3,8 +3,10 @@
 # Zsh Setup Script
 # Part of the general dotfile collection
 # Handles complete zsh setup: aliases, plugins, and basic configuration
-
-set -e
+#
+# No `set -e` — Coder workspaces run other apt-using bootstrap steps in
+# parallel, so we want to fall through and continue with the next component
+# rather than abort the whole script when one apt operation hits a race.
 
 # Colors for output
 RED='\033[0;31m'
@@ -35,6 +37,50 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Resilient apt-get wrapper.
+#
+# Coder workspaces frequently run several apt operations in parallel during
+# startup (workspace bootstrap installs gh while our dotfiles bootstrap
+# installs zsh, etc.). The races we've seen:
+#   * dpkg/apt lock contention -> immediate failure
+#   * concurrent `apt-get clean` wiping /var/cache/apt/archives mid-install
+#     -> "cannot access archive ... .deb: No such file or directory"
+#
+# Mitigations applied here:
+#   * -o DPkg::Lock-Timeout=120 makes apt wait up to 2 min for the lock
+#     instead of failing fast.
+#   * One automatic retry on failure (re-runs `apt-get update` first to
+#     re-download any .debs that were swept by a concurrent `apt-get clean`).
+#   * --fix-missing on retry tells apt to skip packages it cannot fetch.
+apt_safe() {
+    if ! command_exists apt-get; then
+        return 1
+    fi
+
+    local action="$1"
+    shift
+
+    case "$action" in
+        update)
+            sudo apt-get -o DPkg::Lock-Timeout=120 update -qq && return 0
+            sleep 2
+            sudo apt-get -o DPkg::Lock-Timeout=120 update -qq
+            ;;
+        install)
+            local pkgs=("$@")
+            sudo apt-get -o DPkg::Lock-Timeout=120 install -y "${pkgs[@]}" && return 0
+            print_warning "First apt-get install attempt failed, retrying after refresh..."
+            sleep 2
+            sudo apt-get -o DPkg::Lock-Timeout=120 update -qq || true
+            sudo apt-get -o DPkg::Lock-Timeout=120 install -y --fix-missing "${pkgs[@]}"
+            ;;
+        *)
+            print_warning "apt_safe: unknown action '$action'"
+            return 1
+            ;;
+    esac
+}
+
 # Function to install zsh if needed
 install_zsh() {
     print_status "Ensuring zsh is installed..."
@@ -62,8 +108,11 @@ install_zsh() {
     if command_exists apt-get; then
         # Ubuntu/Debian
         print_status "Installing zsh via apt-get..."
-        sudo apt-get update
-        sudo apt-get install -y zsh
+        apt_safe update || true
+        apt_safe install zsh || {
+            print_error "apt-get could not install zsh after retry"
+            return 1
+        }
     elif command_exists yum; then
         # CentOS/RHEL
         print_status "Installing zsh via yum..."
@@ -404,15 +453,15 @@ install_packages() {
     if command_exists apt-get; then
         # Ubuntu/Debian - update package list first
         print_status "Updating package list..."
-        sudo apt-get update -qq
-        
+        apt_safe update || true
+
         for package in "${packages[@]}"; do
             if dpkg -l | grep -q "^ii  $package "; then
                 print_success "$package already installed"
                 ((skipped_count++))
             else
                 print_status "Installing $package..."
-                if sudo apt-get install -y "$package" 2>/dev/null; then
+                if apt_safe install "$package" 2>/dev/null; then
                     ((installed_count++))
                 else
                     print_warning "Could not install $package, continuing..."
@@ -577,14 +626,14 @@ install_gh_cli() {
     if command_exists apt-get; then
         # Ubuntu/Debian - official method
         print_status "Installing gh via apt (official GitHub repo)..."
-        (type -p wget >/dev/null || (sudo apt-get update && sudo apt-get install wget -y)) \
+        (type -p wget >/dev/null || (apt_safe update && apt_safe install wget)) \
             && sudo mkdir -p -m 755 /etc/apt/keyrings \
             && out=$(mktemp) && wget -nv -O"$out" https://cli.github.com/packages/githubcli-archive-keyring.gpg \
             && cat "$out" | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
             && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-            && sudo apt-get update \
-            && sudo apt-get install gh -y
+            && apt_safe update \
+            && apt_safe install gh
         if command_exists gh; then
             print_success "GitHub CLI installed successfully"
             gh --version 2>/dev/null || true

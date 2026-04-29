@@ -59,7 +59,16 @@ install_tmux() {
         fi
     elif [ "$os" = "Linux" ]; then
         if command_exists apt-get && command_exists sudo; then
-            sudo apt-get update -qq && sudo apt-get install -y tmux || return 1
+            # Lock-Timeout + retry to survive concurrent apt operations during
+            # workspace startup (see setup-zsh.sh for the full rationale).
+            local apt_opts="-o DPkg::Lock-Timeout=120"
+            sudo apt-get $apt_opts update -qq || true
+            if ! sudo apt-get $apt_opts install -y tmux; then
+                print_warning "First tmux install failed, retrying with --fix-missing..."
+                sleep 2
+                sudo apt-get $apt_opts update -qq || true
+                sudo apt-get $apt_opts install -y --fix-missing tmux || return 1
+            fi
         elif command_exists dnf && command_exists sudo; then
             sudo dnf install -y tmux || return 1
         elif command_exists pacman && command_exists sudo; then
