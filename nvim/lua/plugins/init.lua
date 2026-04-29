@@ -13,6 +13,31 @@ return {
     end,
   },
 
+  -- Auto-install Mason packages (LSP servers, formatters, linters) so a
+  -- fresh machine just works without remembering to run :MasonInstall.
+  -- Server names below are Mason package names (different from lspconfig's
+  -- names). Update both this list and configs/lspconfig.lua's `servers`
+  -- table when adding a language.
+  {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    dependencies = { "williamboman/mason.nvim" },
+    event = "VeryLazy",
+    config = function()
+      require("mason-tool-installer").setup({
+        ensure_installed = {
+          "pyright",
+          "typescript-language-server",
+          "lua-language-server",
+          "gopls",
+          "json-lsp",
+          "yaml-language-server",
+        },
+        auto_update = false,
+        run_on_start = true,
+      })
+    end,
+  },
+
   -- test new blink
   -- { import = "nvchad.blink.lazyspec" },
 
