@@ -440,12 +440,15 @@ EOF
 install_packages() {
     print_status "Installing essential packages..."
     
-    # Core packages + network tools
+    # Core packages + network tools + dev tools (fd, rg) used by neovim
+    # plugins (telescope, venv-selector.nvim).
     local packages=(
         "curl" "wget" "tree" "htop" "jq"
         # Network tools
-        "net-tools" "dnsutils" "iputils-ping" "traceroute" "nmap" 
+        "net-tools" "dnsutils" "iputils-ping" "traceroute" "nmap"
         "netcat-openbsd" "tcpdump" "iftop" "mtr" "whois" "nload"
+        # Dev tools
+        "fd-find" "ripgrep"
     )
     local installed_count=0
     local skipped_count=0
@@ -468,6 +471,16 @@ install_packages() {
                 fi
             fi
         done
+
+        # Ubuntu's fd-find package installs as `fdfind` to avoid colliding
+        # with another `fd` package; tools (telescope, venv-selector.nvim)
+        # look for the `fd` name. Symlink under ~/.local/bin so PATH lookup
+        # finds it without sudo or system-wide changes.
+        if command_exists fdfind && ! command_exists fd; then
+            mkdir -p "$HOME/.local/bin"
+            ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd"
+            print_success "Symlinked fdfind -> ~/.local/bin/fd"
+        fi
     elif command_exists yum; then
         # CentOS/RHEL
         local yum_packages=("curl" "wget" "tree" "htop" "jq" "net-tools" "bind-utils" "iputils" "traceroute" "nmap" "nmap-ncat" "tcpdump" "iftop" "mtr" "whois")
