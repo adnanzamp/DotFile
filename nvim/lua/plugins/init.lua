@@ -104,6 +104,34 @@ return {
   },
 
   {
+    "polarmutex/git-worktree.nvim",
+    version = "^2",
+    dependencies = {
+      "nvim-telescope/telescope.nvim",
+      "nvim-lua/plenary.nvim",
+    },
+    config = function()
+      require("telescope").load_extension("git_worktree")
+    end,
+    keys = {
+      {
+        "<leader>gw",
+        function()
+          require("telescope").extensions.git_worktree.git_worktrees()
+        end,
+        desc = "Switch git worktree",
+      },
+      {
+        "<leader>gW",
+        function()
+          require("telescope").extensions.git_worktree.create_git_worktree()
+        end,
+        desc = "Create git worktree",
+      },
+    },
+  },
+
+  {
     "pwntester/octo.nvim",
     cmd = "Octo",
     dependencies = {
