@@ -20,7 +20,7 @@ return {
   -- table when adding a language.
   {
     "WhoIsSethDaniel/mason-tool-installer.nvim",
-    dependencies = { "williamboman/mason.nvim" },
+    dependencies = { "mason-org/mason.nvim" },
     event = "VeryLazy",
     config = function()
       require("mason-tool-installer").setup({
