@@ -32,7 +32,7 @@ map("n", "<leader>oi", "<cmd>Octo issue list<CR>",                              
 -- Diffview
 map("n", "<leader>gd", "<cmd>DiffviewOpen<CR>",                                     { desc = "diffview: open" })
 map("n", "<leader>gD", "<cmd>DiffviewClose<CR>",                                    { desc = "diffview: close" })
-map("n", "<leader>gb", "<cmd>DiffviewOpen origin/main...HEAD<CR>",                  { desc = "diffview: branch vs main" })
+map("n", "<leader>gb", "<cmd>DiffviewOpen origin/release...HEAD<CR>",               { desc = "diffview: branch vs release" })
 map("n", "<leader>gh", "<cmd>DiffviewFileHistory %<CR>",                            { desc = "diffview: file history" })
 map("n", "<leader>gH", "<cmd>DiffviewFileHistory<CR>",                              { desc = "diffview: branch history" })
 
