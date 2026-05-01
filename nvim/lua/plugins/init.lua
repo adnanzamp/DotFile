@@ -21,8 +21,10 @@ return {
   {
     "WhoIsSethDaniel/mason-tool-installer.nvim",
     dependencies = { "mason-org/mason.nvim" },
+    cmd = { "MasonToolsInstall", "MasonToolsUpdate", "MasonToolsClean" },
     event = "VeryLazy",
     config = function()
+      require("mason").setup()
       require("mason-tool-installer").setup({
         ensure_installed = {
           "pyright",
@@ -33,8 +35,11 @@ return {
           "yaml-language-server",
         },
         auto_update = false,
-        run_on_start = true,
+        run_on_start = false,
       })
+      vim.defer_fn(function()
+        vim.cmd("MasonToolsInstall")
+      end, 200)
     end,
   },
 
