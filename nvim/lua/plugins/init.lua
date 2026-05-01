@@ -117,7 +117,7 @@ return {
       {
         "<leader>gw",
         function()
-          require("telescope").extensions.git_worktree.git_worktrees()
+          require("telescope").extensions.git_worktree.git_worktree()
         end,
         desc = "Switch git worktree",
       },
