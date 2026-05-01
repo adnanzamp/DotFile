@@ -112,12 +112,6 @@ return {
       "TmuxNavigateRight",
       "TmuxNavigatePrevious",
     },
-    keys = {
-      { "<C-h>", "<cmd>TmuxNavigateLeft<cr>", desc = "Tmux/Vim navigate left" },
-      { "<C-j>", "<cmd>TmuxNavigateDown<cr>", desc = "Tmux/Vim navigate down" },
-      { "<C-k>", "<cmd>TmuxNavigateUp<cr>", desc = "Tmux/Vim navigate up" },
-      { "<C-l>", "<cmd>TmuxNavigateRight<cr>", desc = "Tmux/Vim navigate right" },
-    },
   },
 
   {

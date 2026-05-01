@@ -9,6 +9,12 @@ map("i", "jk", "<ESC>")
 
 map("n", "<leader>e", "<cmd>NvimTreeToggle<CR>", { desc = "nvimtree toggle & focus" })
 
+-- Tmux/Vim seamless navigation (overrides NvChad's <C-hjkl> window-only maps)
+map("n", "<C-h>", "<cmd>TmuxNavigateLeft<CR>",  { desc = "tmux/vim: navigate left" })
+map("n", "<C-j>", "<cmd>TmuxNavigateDown<CR>",  { desc = "tmux/vim: navigate down" })
+map("n", "<C-k>", "<cmd>TmuxNavigateUp<CR>",    { desc = "tmux/vim: navigate up" })
+map("n", "<C-l>", "<cmd>TmuxNavigateRight<CR>", { desc = "tmux/vim: navigate right" })
+
 -- Octo (GitHub PR review)
 map("n", "<leader>op", "<cmd>Octo pr list<CR>",                                     { desc = "octo: list PRs" })
 map("n", "<leader>or", "<cmd>Octo pr search is:open review-requested:@me<CR>",      { desc = "octo: PRs awaiting my review" })
