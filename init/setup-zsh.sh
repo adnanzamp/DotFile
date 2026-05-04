@@ -328,11 +328,14 @@ export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME=""
 
 # Essential plugins for productivity
+# Order matters: zsh-syntax-highlighting must be LAST (it wraps zle widgets,
+# and anything sourced after it can re-wrap/override them and break input).
+# zsh-completions is fpath-only and safe to source early.
 plugins=(
     git
+    zsh-completions
     zsh-autosuggestions
     zsh-syntax-highlighting
-    zsh-completions
 )
 
 # Load Oh My Zsh
