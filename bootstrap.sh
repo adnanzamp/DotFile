@@ -92,6 +92,15 @@ else
     print_warning "tmux setup script not found"
 fi
 
+# Setup Claude Code settings (Stop/Notification bell hooks)
+if [ -f "$DOTFILES_DIR/init/setup-claude.sh" ]; then
+    print_status "Setting up Claude Code settings..."
+    source "$DOTFILES_DIR/init/setup-claude.sh"
+    setup_claude "$DOTFILES_DIR" || print_warning "Claude settings setup did not complete"
+else
+    print_warning "Claude settings setup script not found"
+fi
+
 # Install Cursor extensions if cursor CLI is available
 if command_exists cursor; then
     print_status "Installing Cursor extensions..."

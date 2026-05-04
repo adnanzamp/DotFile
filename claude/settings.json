@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
+  "autoUpdatesChannel": "latest",
+  "skipDangerousModePermissionPrompt": true,
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\a' > /dev/tty 2>/dev/null",
+            "timeout": 1
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\a' > /dev/tty 2>/dev/null",
+            "timeout": 1
+          }
+        ]
+      }
+    ]
+  }
+}
