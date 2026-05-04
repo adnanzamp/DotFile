@@ -344,8 +344,11 @@ source $ZSH/oh-my-zsh.sh
 
 # Initialize oh-my-posh with a theme
 if command -v oh-my-posh &> /dev/null; then
-    # Use agnoster theme by default (can be changed to any theme in ~/.poshthemes/)
-    if [ -f "$HOME/.poshthemes/agnoster.omp.json" ]; then
+    # Prefer the custom minimal theme (two-line, no host, short path) shipped
+    # via dotfiles. Falls back to stock themes if missing.
+    if [ -f "$HOME/.poshthemes/minimal.omp.json" ]; then
+        eval "$(oh-my-posh init zsh --config $HOME/.poshthemes/minimal.omp.json)"
+    elif [ -f "$HOME/.poshthemes/agnoster.omp.json" ]; then
         eval "$(oh-my-posh init zsh --config $HOME/.poshthemes/agnoster.omp.json)"
     elif [ -f "$HOME/.poshthemes/jandedobbeleer.omp.json" ]; then
         eval "$(oh-my-posh init zsh --config $HOME/.poshthemes/jandedobbeleer.omp.json)"
@@ -800,6 +803,14 @@ install_oh_my_posh() {
         print_success "oh-my-posh themes downloaded"
     else
         print_success "oh-my-posh themes already exist"
+    fi
+
+    # Install the custom minimal theme shipped with the dotfiles. Always copy
+    # so updates land on re-bootstrap.
+    local custom_theme="$DOTFILES_DIR/poshthemes/minimal.omp.json"
+    if [ -f "$custom_theme" ]; then
+        cp "$custom_theme" "$themes_dir/minimal.omp.json"
+        print_success "installed custom theme: minimal.omp.json"
     fi
     
     # Install Nerd Fonts (required for icons)
