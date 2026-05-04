@@ -3,16 +3,17 @@
 # Pulls the latest dotfiles and brings every tracked component in sync:
 #   - git pull (auto-stashes local changes)
 #   - regenerates ~/.zshrc from the embedded template (force, since the
-#     setup-zsh.sh signature check otherwise skips)
+#     create_zshrc signature check otherwise skips)
+#   - copies the custom oh-my-posh theme into ~/.poshthemes/
 #   - re-applies tmux symlink + Claude settings symlink
-#   - re-copies the custom oh-my-posh theme into ~/.poshthemes/
 #   - git pulls each zsh plugin (autosuggestions, syntax-highlighting, completions)
 #   - updates tmux TPM plugins
 #   - syncs neovim plugins via lazy.nvim
 #   - reloads tmux config in any running tmux sessions
 #
 # Heavy installs (apt packages, oh-my-posh binary, nerd fonts, cursor
-# extensions) are NOT re-run here — for a full rebuild use bootstrap.sh.
+# extensions, node/claude/gh/lazygit) are NOT re-run here — for a full
+# rebuild use bootstrap.sh.
 #
 # Run from anywhere; the script resolves its own location.
 
@@ -66,19 +67,40 @@ fi
 
 # ---------------------------------------------------------------------------
 # 2. Regenerate ~/.zshrc from the embedded template (force)
-#    setup-zsh.sh skips when its signature check passes, so we move the
-#    existing file aside to make it definitely re-create it. setup_zsh also
-#    handles oh-my-posh theme copy + (idempotent) plugin install.
+#    create_zshrc skips when its signature check passes, so we move the
+#    existing file aside to force a re-create. We deliberately avoid calling
+#    the full setup_zsh — that function re-checks every install (lazygit,
+#    gh, nodejs, claude, cursor, etc.) which is bootstrap.sh's job.
 # ---------------------------------------------------------------------------
 if [ -f "$DOTFILES_DIR/init/setup-zsh.sh" ]; then
-    print_status "Regenerating ~/.zshrc and re-running zsh setup..."
+    print_status "Regenerating ~/.zshrc..."
     if [ -f "$HOME/.zshrc" ]; then
         mv "$HOME/.zshrc" "$HOME/.zshrc.update-bak.$(date +%Y%m%d-%H%M%S)"
     fi
     # shellcheck disable=SC1090
     source "$DOTFILES_DIR/init/setup-zsh.sh"
-    setup_zsh "" >/dev/null 2>&1 && print_success "zsh config regenerated" \
-        || print_warning "setup_zsh exited non-zero — inspect manually"
+    if create_zshrc "$HOME" "$DOTFILES_DIR" >/dev/null; then
+        print_success "~/.zshrc regenerated"
+    else
+        print_warning "create_zshrc exited non-zero — inspect manually"
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# 2b. Re-copy custom oh-my-posh theme into ~/.poshthemes/
+#     install_oh_my_posh handles this on first bootstrap, but setup_zsh skips
+#     it when oh-my-posh is already installed — so the theme update never
+#     lands on subsequent runs. Do it directly here.
+# ---------------------------------------------------------------------------
+CUSTOM_THEME_SRC="$DOTFILES_DIR/poshthemes/minimal.omp.json"
+CUSTOM_THEME_DST="$HOME/.poshthemes/minimal.omp.json"
+if [ -f "$CUSTOM_THEME_SRC" ]; then
+    mkdir -p "$HOME/.poshthemes"
+    if cp "$CUSTOM_THEME_SRC" "$CUSTOM_THEME_DST"; then
+        print_success "oh-my-posh custom theme synced"
+    else
+        print_warning "Failed to copy custom oh-my-posh theme"
+    fi
 fi
 
 # ---------------------------------------------------------------------------

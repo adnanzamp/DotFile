@@ -33,6 +33,17 @@
             "fetch_upstream_icon": false
           },
           "template": " ({{ .HEAD }})"
+        },
+        {
+          "type": "python",
+          "style": "plain",
+          "foreground": "#B59CFF",
+          "properties": {
+            "display_mode": "environment",
+            "fetch_virtual_env": true,
+            "home_enabled": false
+          },
+          "template": " ({{ .Venv }})"
         }
       ]
     },

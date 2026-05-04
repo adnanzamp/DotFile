@@ -2,8 +2,6 @@
   "permissions": {
     "defaultMode": "bypassPermissions"
   },
-  "autoUpdatesChannel": "latest",
-  "skipDangerousModePermissionPrompt": true,
   "hooks": {
     "Stop": [
       {
@@ -29,5 +27,7 @@
         ]
       }
     ]
-  }
+  },
+  "autoUpdatesChannel": "latest",
+  "skipDangerousModePermissionPrompt": true
 }
