@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "printf '\\a' > /dev/tty 2>/dev/null",
+            "command": "{ printf '\\a' > /dev/tty; } 2>/dev/null; true",
             "timeout": 1
           }
         ]
@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "printf '\\a' > /dev/tty 2>/dev/null",
+            "command": "{ printf '\\a' > /dev/tty; } 2>/dev/null; true",
             "timeout": 1
           }
         ]
