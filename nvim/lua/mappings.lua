@@ -32,8 +32,12 @@ map("n", "<leader>oi", "<cmd>Octo issue list<CR>",                              
 -- Diffview
 map("n", "<leader>gd", "<cmd>DiffviewOpen<CR>",                                     { desc = "diffview: open" })
 map("n", "<leader>gD", "<cmd>DiffviewClose<CR>",                                    { desc = "diffview: close" })
-map("n", "<leader>gb", "<cmd>DiffviewOpen origin/release...HEAD<CR>",               { desc = "diffview: branch vs release" })
-map("n", "<leader>gm", "<cmd>DiffviewOpen origin/main...HEAD<CR>",                  { desc = "diffview: branch vs main" })
+-- No `...HEAD` suffix: that form makes the right panel a committed git object,
+-- so LSP can't attach. Plain `<rev>` puts the working tree on the right
+-- (real file on disk) so gd/K/hover work, at the cost of also showing
+-- uncommitted changes.
+map("n", "<leader>gb", "<cmd>DiffviewOpen origin/release<CR>",                      { desc = "diffview: branch vs release" })
+map("n", "<leader>gm", "<cmd>DiffviewOpen origin/main<CR>",                         { desc = "diffview: branch vs main" })
 map("n", "<leader>gh", "<cmd>DiffviewFileHistory %<CR>",                            { desc = "diffview: file history" })
 map("n", "<leader>gH", "<cmd>DiffviewFileHistory<CR>",                              { desc = "diffview: branch history" })
 
