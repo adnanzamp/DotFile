@@ -41,6 +41,21 @@ map("n", "<leader>gm", "<cmd>DiffviewOpen origin/main<CR>",                     
 map("n", "<leader>gh", "<cmd>DiffviewFileHistory %<CR>",                            { desc = "diffview: file history" })
 map("n", "<leader>gH", "<cmd>DiffviewFileHistory<CR>",                              { desc = "diffview: branch history" })
 
+-- Window resizing (hold the key to keep resizing — auto-repeats)
+-- Alt+hjkl: home-row and conflict-free. Avoids Ctrl+arrows (grabbed by macOS
+-- Mission Control for switching Spaces) and Ctrl+Shift+letter (needs CSI-u
+-- that iTerm2 doesn't send). Requires iTerm2:
+--   Settings → Profiles → Keys → General → Left Option key = "Esc+".
+map("n", "<M-h>", "<cmd>vertical resize -2<CR>", { desc = "window: decrease width" })
+map("n", "<M-l>", "<cmd>vertical resize +2<CR>", { desc = "window: increase width" })
+map("n", "<M-j>", "<cmd>resize -2<CR>",          { desc = "window: decrease height" })
+map("n", "<M-k>", "<cmd>resize +2<CR>",          { desc = "window: increase height" })
+
+-- Buffer navigation (overrides default H/L screen-line motions)
+map("n", "<S-l>", function() require("nvchad.tabufline").next() end, { desc = "buffer: go to next" })
+map("n", "<S-h>", function() require("nvchad.tabufline").prev() end, { desc = "buffer: go to previous" })
+map("n", "<leader>bd", function() require("nvchad.tabufline").close_buffer() end, { desc = "buffer: delete/close" })
+
 -- Tab navigation
 map("n", "<leader>tn", "<cmd>tabnext<CR>",                                          { desc = "tab: next" })
 map("n", "<leader>tp", "<cmd>tabprevious<CR>",                                      { desc = "tab: previous" })

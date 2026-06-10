@@ -5,6 +5,40 @@ return {
     opts = require "configs.conform",
   },
 
+  -- Exclude noisy directories/files from Telescope find_files & live_grep.
+  -- file_ignore_patterns are Lua patterns matched against each entry's path
+  -- (so "." is escaped as "%."). Extends NvChad's defaults instead of
+  -- replacing them.
+  {
+    "nvim-telescope/telescope.nvim",
+    opts = function(_, conf)
+      conf.defaults = conf.defaults or {}
+      conf.defaults.file_ignore_patterns = vim.list_extend(
+        conf.defaults.file_ignore_patterns or {},
+        {
+          "node_modules/",
+          "%.venv/",
+          "venv/",
+          "env/",
+          "%.env/",
+          "__pycache__/",
+          "%.pyc$",
+          "%.pyo$",
+          "%.pytest_cache/",
+          "%.mypy_cache/",
+          "%.ruff_cache/",
+          "%.git/",
+          "dist/",
+          "build/",
+          "%.next/",
+          "target/",
+          "%.DS_Store",
+        }
+      )
+      return conf
+    end,
+  },
+
   -- These are some examples, uncomment them if you want to see them work!
   {
     "neovim/nvim-lspconfig",
