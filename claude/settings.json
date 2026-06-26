@@ -2,6 +2,7 @@
   "permissions": {
     "defaultMode": "bypassPermissions"
   },
+  "model": "opus",
   "hooks": {
     "Stop": [
       {
@@ -28,6 +29,9 @@
       }
     ]
   },
+  "effortLevel": "xhigh",
   "autoUpdatesChannel": "latest",
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "agentPushNotifEnabled": true,
+  "tui": "fullscreen"
 }
