@@ -32,12 +32,15 @@ map("n", "<leader>oi", "<cmd>Octo issue list<CR>",                              
 -- Diffview
 map("n", "<leader>gd", "<cmd>DiffviewOpen<CR>",                                     { desc = "diffview: open" })
 map("n", "<leader>gD", "<cmd>DiffviewClose<CR>",                                    { desc = "diffview: close" })
--- No `...HEAD` suffix: that form makes the right panel a committed git object,
--- so LSP can't attach. Plain `<rev>` puts the working tree on the right
--- (real file on disk) so gd/K/hover work, at the cost of also showing
--- uncommitted changes.
-map("n", "<leader>gb", "<cmd>DiffviewOpen origin/release<CR>",                      { desc = "diffview: branch vs release" })
-map("n", "<leader>gm", "<cmd>DiffviewOpen origin/main<CR>",                         { desc = "diffview: branch vs main" })
+-- Use `<base>...HEAD` (symmetric/merge-base diff) so we see ONLY what this
+-- branch added — the true PR diff — even when release/main has advanced past
+-- the point we branched off. A plain `<rev>` would also show unrelated commits
+-- that landed on the base branch since.
+-- `--imply-local` makes diffview put the working-tree file on the right side
+-- (because the right rev is HEAD), so LSP still attaches (gd/K/hover/diagnostics)
+-- and uncommitted changes show too — the reason we'd previously avoided `...HEAD`.
+map("n", "<leader>gb", "<cmd>DiffviewOpen origin/release...HEAD --imply-local<CR>", { desc = "diffview: PR diff vs release" })
+map("n", "<leader>gm", "<cmd>DiffviewOpen origin/main...HEAD --imply-local<CR>",    { desc = "diffview: PR diff vs main" })
 map("n", "<leader>gh", "<cmd>DiffviewFileHistory %<CR>",                            { desc = "diffview: file history" })
 map("n", "<leader>gH", "<cmd>DiffviewFileHistory<CR>",                              { desc = "diffview: branch history" })
 
