@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+# claude-usage — live mirror of Claude Code's /usage (plan rate-limit quota).
+#
+# Polls the same endpoint the CLI's /usage command uses (GET /api/oauth/usage)
+# and updates in place. The endpoint is itself rate-limited (it returns 429 +
+# retry-after when hit too often), so we fetch sparingly and, on failure, keep
+# showing the last good data while backing off — no error is ever shown.
+#
+# Usage:   claude-usage [fetch_interval_seconds]   # default 60s between fetches
+#          REFRESH=120 claude-usage
+# The screen still ticks every second (age / countdown); only the network
+# fetch obeys the interval. Ctrl-C to quit.
+
+set -uo pipefail
+
+INTERVAL="${1:-${REFRESH:-60}}"
+(( INTERVAL < 15 )) && INTERVAL=15        # floor: stay well under the endpoint's limit
+CREDS="$HOME/.claude/.credentials.json"
+BASE="${ANTHROPIC_BASE_URL:-https://api.anthropic.com}"
+RESP="$(mktemp)"; HDR="$(mktemp)"; TMP="$(mktemp)"   # RESP = last good body
+
+# Colors (disabled if not a TTY).
+if [ -t 1 ]; then
+  B=$'\e[1m'; DIM=$'\e[2m'; R=$'\e[0m'
+  CYAN=$'\e[36m'; GREEN=$'\e[32m'; YELLOW=$'\e[33m'; RED=$'\e[31m'; MAG=$'\e[35m'
+else
+  B=""; DIM=""; R=""; CYAN=""; GREEN=""; YELLOW=""; RED=""; MAG=""
+fi
+
+# In-place redraw primitives.
+HOME_CUR=$'\e[H'; EL=$'\e[K'; ED=$'\e[J'
+cleanup() { printf '\e[?25h'; rm -f "$RESP" "$HDR" "$TMP"; echo; }
+trap 'cleanup; exit 0' INT TERM
+printf '\e[?25l\e[2J\e[H'
+
+out=""
+add()   { out+="${1}${EL}"$'\n'; }
+flush() { printf '%s' "${HOME_CUR}${out}${ED}"; }
+
+bar() {  # percent width
+  local pct=${1%.*} width=${2:-22} filled i s=""
+  (( pct < 0 )) && pct=0; (( pct > 100 )) && pct=100
+  filled=$(( pct * width / 100 ))
+  for ((i=0; i<width; i++)); do (( i < filled )) && s+="█" || s+="░"; done
+  printf '%s' "$s"
+}
+
+rel_until() {  # relative time until an ISO8601 timestamp
+  local ts="$1" target now d
+  { [ -z "$ts" ] || [ "$ts" = "null" ]; } && { printf '—'; return; }
+  target=$(date -d "$ts" +%s 2>/dev/null) || { printf '—'; return; }
+  now=$(date +%s); d=$(( target - now )); (( d < 0 )) && d=0
+  if   (( d >= 86400 )); then printf 'in %dd %dh' $(( d/86400 )) $(( (d%86400)/3600 ))
+  elif (( d >= 3600  )); then printf 'in %dh %dm' $(( d/3600 ))  $(( (d%3600)/60 ))
+  else                        printf 'in %dm'     $(( d/60 )); fi
+}
+
+color_for() {  # percent severity
+  local pct=${1%.*} sev="$2"
+  case "$sev" in
+    critical|reached|exceeded) printf '%s' "$RED";    return;;
+    warning|high|elevated)     printf '%s' "$YELLOW"; return;;
+  esac
+  if   (( pct >= 90 )); then printf '%s' "$RED"
+  elif (( pct >= 70 )); then printf '%s' "$YELLOW"
+  else                       printf '%s' "$GREEN"; fi
+}
+
+PLAN=$(jq -r '.claudeAiOauth.subscriptionType // "?"' "$CREDS" 2>/dev/null)
+
+# --- state -----------------------------------------------------------------
+last_ok=0        # epoch of last successful fetch (0 = never)
+failures=0       # consecutive non-200/non-429 failures (for exp backoff)
+status=""        # short reason shown dimmed when the latest fetch failed
+fetch_due_at=0   # fetch when now >= this (0 => fetch immediately)
+
+do_fetch() {
+  local now code ra back token
+  now=$(date +%s)
+  token=$(jq -r '.claudeAiOauth.accessToken // empty' "$CREDS" 2>/dev/null)
+  if [ -z "$token" ]; then
+    status="no OAuth token — run 'claude' and sign in"
+    fetch_due_at=$(( now + INTERVAL )); return
+  fi
+
+  code=$(curl -sS -o "$TMP" -D "$HDR" -w '%{http_code}' --max-time 15 \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -H "anthropic-beta: oauth-2025-04-20" \
+    -H "User-Agent: claude-usage-monitor" \
+    "$BASE/api/oauth/usage" 2>/dev/null)
+
+  if [ "$code" = "200" ]; then
+    mv "$TMP" "$RESP"; last_ok=$now; failures=0; status=""
+    fetch_due_at=$(( now + INTERVAL ))
+  elif [ "$code" = "429" ]; then
+    ra=$(grep -i '^retry-after:' "$HDR" | tr -d '\r' | awk '{print $2}')
+    [[ "$ra" =~ ^[0-9]+$ ]] || ra=$INTERVAL
+    (( ra < 5 )) && ra=5
+    status="rate-limited — showing last good data"
+    fetch_due_at=$(( now + ra + 2 ))           # honor server's retry-after
+  elif [ "$code" = "401" ] || [ "$code" = "403" ]; then
+    status="auth expired (HTTP $code) — run any 'claude' command to refresh"
+    fetch_due_at=$(( now + INTERVAL ))         # token re-read next fetch
+  else
+    failures=$(( failures + 1 )); (( failures > 6 )) && failures=6
+    back=$(( INTERVAL * (1 << failures) )); (( back > 300 )) && back=300
+    status="fetch error (HTTP ${code:-network}) — showing last good data"
+    fetch_due_at=$(( now + back ))             # exponential backoff
+  fi
+}
+
+render() {
+  local now ago nxt upd
+  now=$(date +%s)
+  out=""
+  add "${B}${CYAN}  Claude — Plan Usage${R} ${DIM}(${PLAN})${R}"
+  if (( last_ok > 0 )); then
+    ago=$(( now - last_ok )); upd="updated $(date -d "@$last_ok" '+%H:%M:%S') (${ago}s ago)"
+  else
+    upd="no data yet"
+  fi
+  nxt=$(( fetch_due_at - now )); (( nxt < 0 )) && nxt=0
+  add "  ${DIM}${upd} · next check in ${nxt}s · GET /api/oauth/usage${R}"
+  if [ -n "$status" ]; then add "  ${YELLOW}⚠ ${status}${R}"; else add ""; fi
+  add ""
+
+  if jq -e '.limits' "$RESP" >/dev/null 2>&1; then
+    while IFS='|' read -r pct sev kind model resets active; do
+      [ -z "$kind" ] && continue
+      case "$kind" in
+        session)        label="5-hour limit" ;;
+        weekly_all)     label="Weekly (all models)" ;;
+        weekly_scoped)  label="Weekly (${model:-scoped})" ;;
+        *)              label="$kind" ;;
+      esac
+      local col marker line
+      col=$(color_for "$pct" "$sev")
+      marker="  "; [ "$active" = "true" ] && marker="${B}${CYAN}▸ ${R}"
+      printf -v line "  %s${B}%-22s${R} ${col}%s${R} ${B}%3d%%${R}   ${DIM}resets %s${R}" \
+        "$marker" "$label" "$(bar "$pct" 22)" "${pct%.*}" "$(rel_until "$resets")"
+      add "$line"
+    done < <(jq -r '.limits[] | [ (.percent|tostring), (.severity//""), .kind, (.scope.model.display_name//""), (.resets_at//""), (.is_active|tostring) ] | join("|")' "$RESP")
+    eu=$(jq -r 'if .extra_usage.is_enabled then "enabled · used \(.spend.used.amount_minor/100|tostring) \(.spend.used.currency)" else "" end' "$RESP" 2>/dev/null)
+    [ -n "$eu" ] && { add ""; add "  ${DIM}Extra usage credits: ${eu}${R}"; }
+    add ""
+    add "  ${DIM}▸ = currently binding limit${R}"
+  else
+    add "  ${DIM}Waiting for first successful response…${R}"
+  fi
+  flush
+}
+
+# --- main loop: render every 1s, fetch only when due -----------------------
+while true; do
+  now=$(date +%s)
+  (( now >= fetch_due_at )) && do_fetch
+  render
+  sleep 1
+done

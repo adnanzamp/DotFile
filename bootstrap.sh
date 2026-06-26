@@ -101,6 +101,15 @@ else
     print_warning "Claude settings setup script not found"
 fi
 
+# Install standalone bin/ scripts (e.g. claude-usage) into ~/.local/bin
+if [ -f "$DOTFILES_DIR/init/setup-bin.sh" ]; then
+    print_status "Setting up bin scripts..."
+    source "$DOTFILES_DIR/init/setup-bin.sh"
+    setup_bin "$DOTFILES_DIR" || print_warning "bin scripts setup did not complete"
+else
+    print_warning "bin scripts setup script not found"
+fi
+
 # Install Cursor extensions if cursor CLI is available
 if command_exists cursor; then
     print_status "Installing Cursor extensions..."
@@ -128,6 +137,7 @@ print_status "  - Network tools (net-tools, nmap, tcpdump, mtr, etc.)"
 print_status "  - Lazygit (terminal UI for git)"
 print_status "  - GitHub CLI (gh)"
 print_status "  - Claude Code (official Anthropic CLI)"
+print_status "  - claude-usage (live /usage quota monitor) on PATH"
 print_status "  - Cursor CLI and extensions"
 print_status "  - Neovim (latest) with NvChad-based config"
 print_status "  - tmux with TPM + plugins (prefix: Ctrl+Space)"
